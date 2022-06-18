@@ -7,8 +7,8 @@ import java.util.Date;
 
 public class Employee {
     private String _employeeId;
+    private String _fullName;
     private String _email;
-    private String _name;
     private Date _birthDate;
     private Gender _gender;
 
@@ -16,14 +16,14 @@ public class Employee {
 
     public Employee(
             String employeeId,
+            String fullName,
             String email,
-            String name,
             Date birthDate,
             Gender gender)
     {
         _employeeId = employeeId;
+        _fullName = fullName;
         _email = email;
-        _name = name;
         _birthDate = birthDate;
         _gender = gender;
     }
@@ -35,6 +35,16 @@ public class Employee {
     public void setEmployeeId(String employeeId) {
         if (!employeeId.isEmpty()) {
             _employeeId = employeeId;
+        }
+    }
+
+    public String getFullName() {
+        return _fullName;
+    }
+
+    public void setFullName(String fullName) {
+        if (!fullName.isEmpty()) {
+            _fullName = fullName;
         }
     }
 
