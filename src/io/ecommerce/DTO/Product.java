@@ -1,18 +1,17 @@
 package io.ecommerce.DTO;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class Product {
     private String _productId;
     private String _name;
     private String _description;
     private String _origin;
-    private Date _manufactureDate;
+    private LocalDate _manufactureDate;
     private long _quantity;
     private double _price;
     private long _insuranceDuration;
     private double _discountPercentage;
-    private String _imageReference;
 
     public Product() {}
 
@@ -21,12 +20,11 @@ public class Product {
             String name,
             String description,
             String origin,
-            Date manufactureDate,
+            LocalDate manufactureDate,
             long quantity,
             double price,
             long insuranceDuration,
-            double discountPercentage,
-            String imageReference)
+            double discountPercentage)
     {
         _productId = productId;
         _name = name;
@@ -37,14 +35,13 @@ public class Product {
         _price = price;
         _insuranceDuration = insuranceDuration;
         _discountPercentage = discountPercentage;
-        _imageReference = imageReference;
     }
 
     public String getProductId() {
         return _productId;
     }
 
-    public void setProduct(String productId) {
+    public void setProductId(String productId) {
         if (!productId.isEmpty()) {
             _productId = productId;
         }
@@ -74,11 +71,17 @@ public class Product {
         return _origin;
     }
 
-    public Date getManufactureDate() {
+    public void setOrigin(String origin) {
+        if (!origin.isEmpty()) {
+            _origin = origin;
+        }
+    }
+
+    public LocalDate getManufactureDate() {
         return _manufactureDate;
     }
 
-    public void setManufactureDate(Date manufactureDate) {
+    public void setManufactureDate(LocalDate manufactureDate) {
         _manufactureDate = manufactureDate;
     }
 
@@ -119,16 +122,6 @@ public class Product {
     public void setDiscountPercentage(double discountPercentage) {
         if (discountPercentage >= 0.0) {
             _discountPercentage = discountPercentage;
-        }
-    }
-
-    public String getImageReference() {
-        return _imageReference;
-    }
-
-    public void setImageReference(String imageReference) {
-        if (!imageReference.isEmpty()) {
-            _imageReference = imageReference;
         }
     }
 }

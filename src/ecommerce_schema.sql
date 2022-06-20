@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS Products (
 	price numeric NOT NULL,
 	insurance_duration int NOT NULL,
 	discount_percentage double precision NOT NULL,
-	image_reference text,
 	CONSTRAINT pk_product_id PRIMARY KEY(product_id),
 	CONSTRAINT chk_quantity CHECK (quantity >= 0),
 	CONSTRAINT chk_price CHECK (price >= 0),

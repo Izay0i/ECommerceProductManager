@@ -2,24 +2,31 @@ package io.ecommerce.DAL;
 
 import io.ecommerce.ConnectionConfigurator;
 import io.ecommerce.DTO.Employee;
+import io.ecommerce.Gender;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class EmployeeDAL implements ConnectionConfigurator {
     public ArrayList<Employee> getAllEmployees() {
         ArrayList<Employee> employees = new ArrayList<>();
-        String query = "SELECT * FROM Employees;";
+        String query = "SELECT * FROM Employees ORDER BY employ_id DESC;";
 
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+        try (Connection connection = DriverManager.getConnection(url);
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(query);
         )
         {
             while (resultSet.next()) {
                 Employee employee = new Employee();
-                //TODO:
-                //employee's properties
+                employee.setEmployeeId(resultSet.getString(1));
+                employee.setFullName(resultSet.getString(2));
+                employee.setEmail(resultSet.getString(3));
+                employee.setBirthdate(LocalDate.parse(resultSet.getString(4)));
+                employee.setGender(Gender.valueOf(resultSet.getString(5).toUpperCase(Locale.ROOT)));
+
                 employees.add(employee);
             }
         }
@@ -31,10 +38,12 @@ public class EmployeeDAL implements ConnectionConfigurator {
     }
 
     public Employee getEmployeeByIdOrName(String key) {
-        Employee employee = new Employee();
-        String query = "SELECT * FROM Employees WHERE employee_id = ? OR full_name = ?;";
+        key += "%";
 
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+        Employee employee = null;
+        String query = "SELECT * FROM Employees WHERE employee_id LIKE ? OR full_name LIKE ?;";
+
+        try (Connection connection = DriverManager.getConnection(url);
             PreparedStatement preparedStatement = connection.prepareStatement(query);
         )
         {
@@ -42,8 +51,12 @@ public class EmployeeDAL implements ConnectionConfigurator {
             preparedStatement.setString(2, key);
             try (ResultSet resultSet = preparedStatement.executeQuery();) {
                 while (resultSet.next()) {
-                    //TODO:
-                    //employee's properties
+                    employee = new Employee();
+                    employee.setEmployeeId(resultSet.getString(1));
+                    employee.setFullName(resultSet.getString(2));
+                    employee.setEmail(resultSet.getString(3));
+                    employee.setBirthdate(LocalDate.parse(resultSet.getString(4)));
+                    employee.setGender(Gender.valueOf(resultSet.getString(5).toUpperCase(Locale.ROOT)));
                 }
             }
         }
@@ -54,7 +67,35 @@ public class EmployeeDAL implements ConnectionConfigurator {
         return employee;
     }
 
-    public boolean updateEmployeeById(String id, Employee employee) {
+    public Employee getEmployeeByCredentials(String email, String password) {
+        Employee employee = null;
+        String query = "SELECT * FROM Employees WHERE email = ? AND password = ?;";
+
+        try (Connection connection = DriverManager.getConnection(url);
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+        )
+        {
+            preparedStatement.setString(1, email);
+            preparedStatement.setString(2, password);
+            try (ResultSet resultSet = preparedStatement.executeQuery();) {
+                while (resultSet.next()) {
+                    employee = new Employee();
+                    employee.setEmployeeId(resultSet.getString(1));
+                    employee.setFullName(resultSet.getString(2));
+                    employee.setEmail(resultSet.getString(3));
+                    employee.setBirthdate(LocalDate.parse(resultSet.getString(5)));
+                    employee.setGender(Gender.valueOf(resultSet.getString(6).toUpperCase(Locale.ROOT)));
+                }
+            }
+        }
+        catch (SQLException exception) {
+            exception.printStackTrace();
+        }
+
+        return employee;
+    }
+
+    public boolean updateEmployeeById(Employee employee) {
         int rowUpdated = 0;
         String query = """
                 UPDATE Employees SET 
@@ -65,13 +106,13 @@ public class EmployeeDAL implements ConnectionConfigurator {
                 WHERE employ_id = ?;
                 """;
 
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+        try (Connection connection = DriverManager.getConnection(url);
             PreparedStatement preparedStatement = connection.prepareStatement(query);
         )
         {
             preparedStatement.setString(1, employee.getFullName());
             preparedStatement.setString(2, employee.getEmail());
-            preparedStatement.setDate(3, (Date)employee.getBirthdate());
+            preparedStatement.setDate(3, Date.valueOf(employee.getBirthdate()));
             preparedStatement.setString(4, employee.getGender().toString());
             preparedStatement.setString(5, employee.getEmployeeId());
             rowUpdated = preparedStatement.executeUpdate();
@@ -87,7 +128,7 @@ public class EmployeeDAL implements ConnectionConfigurator {
         int rowDeleted = 0;
         String query = "DELETE FROM Employees WHERE employ_id = ?;";
 
-        try (Connection connection = DriverManager.getConnection(url, username, password);
+        try (Connection connection = DriverManager.getConnection(url);
             PreparedStatement preparedStatement = connection.prepareStatement(query);
         )
         {

@@ -16,8 +16,12 @@ public class EmployeeBUS {
         return _employeeDAL.getEmployeeByIdOrName(key);
     }
 
-    public boolean updateEmployeeById(String id, Employee employee) {
-        return _employeeDAL.updateEmployeeById(id, employee);
+    public Employee getEmployeeByCredentials(String email, String password) {
+        return _employeeDAL.getEmployeeByCredentials(email, password);
+    }
+
+    public boolean updateEmployeeById(Employee employee) {
+        return _employeeDAL.updateEmployeeById(employee);
     }
 
     public boolean deleteEmployeeById(String id) {

@@ -20,8 +20,8 @@ public class ProductBUS {
         return _productDAL.addProduct(product);
     }
 
-    public boolean updateProductById(String id, Product product) {
-        return _productDAL.updateProductById(id, product);
+    public boolean updateProductById(Product product) {
+        return _productDAL.updateProductById(product);
     }
 
     public boolean deleteProductById(String id) {

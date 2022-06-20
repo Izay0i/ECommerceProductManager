@@ -3,13 +3,13 @@ package io.ecommerce.DTO;
 import io.ecommerce.Gender;
 import io.ecommerce.Utility;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class Employee {
     private String _employeeId;
     private String _fullName;
     private String _email;
-    private Date _birthDate;
+    private LocalDate _birthDate;
     private Gender _gender;
 
     public Employee() {}
@@ -18,7 +18,7 @@ public class Employee {
             String employeeId,
             String fullName,
             String email,
-            Date birthDate,
+            LocalDate birthDate,
             Gender gender)
     {
         _employeeId = employeeId;
@@ -58,11 +58,11 @@ public class Employee {
         }
     }
 
-    public Date getBirthdate() {
+    public LocalDate getBirthdate() {
         return _birthDate;
     }
 
-    public void setBirthdate(Date birthDate) {
+    public void setBirthdate(LocalDate birthDate) {
         _birthDate = birthDate;
     }
 
