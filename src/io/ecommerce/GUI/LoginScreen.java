@@ -1,12 +1,11 @@
 package io.ecommerce.GUI;
 
-import io.ecommerce.BUS.EmployeeBUS;
-import io.ecommerce.DTO.Employee;
+import io.ecommerce.Credentials.CredentialsHandler;
+import io.ecommerce.Credentials.EmptyCredentialsHandler;
+import io.ecommerce.Credentials.IHandler;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class LoginScreen extends JFrame {
     private JPanel loginPanel;
@@ -17,63 +16,46 @@ public class LoginScreen extends JFrame {
     private JLabel passwordLabel;
     private JButton exitButton;
 
-    private EmployeeBUS _employeeBUS = new EmployeeBUS();
+    private static volatile LoginScreen _loginScreenInstance = null;
 
-    private void _validateCredentials() {
-        if (emailTextField.getText().isEmpty() || passwordTextField.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Email và mật khẩu không được để trống.",
-                    "!!!",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
-
-        Employee employee = _employeeBUS.getEmployeeByCredentials(
-                emailTextField.getText().trim(),
-                passwordTextField.getText().trim()
-        );
-
-        if (employee != null) {
-            ProductScreen productScreen = new ProductScreen(employee);
-            dispose();
-        }
-        else {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Đăng nhập không thành công. Kiểm tra email và mật khẩu.",
-                    "!!!",
-                    JOptionPane.ERROR_MESSAGE
-            );
-        }
-    }
-
-    public LoginScreen() {
+    private LoginScreen() {
         setTitle("Đăng nhập");
         setContentPane(loginPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(400, 300));
         pack();
 
-        loginButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                _validateCredentials();
-            }
-        });
+        EmptyCredentialsHandler emptyCredentialsHandler = new EmptyCredentialsHandler(this);
+        CredentialsHandler credentialsHandler = new CredentialsHandler(this);
+        emptyCredentialsHandler.setNext(credentialsHandler);
 
-        exitButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.exit(0);
-            }
-        });
+        loginButton.addActionListener(e -> _validateCredentials(emptyCredentialsHandler));
+
+        exitButton.addActionListener(e -> System.exit(0));
 
         setVisible(true);
     }
 
+    private void _validateCredentials(IHandler handler) {
+        Thread thread = new Thread(() -> {
+            if (handler.handleCredentials(emailTextField.getText().trim(), passwordTextField.getText().trim())) {
+                ProductScreen.getProductScreenInstance();
+                dispose();
+            }
+        });
+        thread.start();
+    }
+
+    public static LoginScreen getLoginScreenInstance() {
+        synchronized (LoginScreen.class) {
+            if (_loginScreenInstance == null) {
+                _loginScreenInstance = new LoginScreen();
+            }
+        }
+        return _loginScreenInstance;
+    }
+
     public static void main(String[] args) {
-        LoginScreen loginScreen = new LoginScreen();
+        LoginScreen.getLoginScreenInstance();
     }
 }

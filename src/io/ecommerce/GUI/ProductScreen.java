@@ -1,16 +1,11 @@
 package io.ecommerce.GUI;
 
 import io.ecommerce.BUS.ProductBUS;
-import io.ecommerce.DTO.Employee;
 import io.ecommerce.DTO.Product;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -40,14 +35,178 @@ public class ProductScreen extends JFrame {
     private JTable productsTable;
     private JTextField searchTextField;
     private JButton searchButton;
-    private JButton infoButton;
+    private JButton exitButton;
     private JTextField productIdTextField;
     private JLabel productIdLabel;
     private JScrollPane productScrollPane;
 
+    private static volatile ProductScreen _productScreenInstance = null;
     private ProductBUS _productBUS = new ProductBUS();
-    private Employee _employee = null;
-    private ArrayList<Product> _products = new ArrayList<>();
+    private ArrayList<Product> _products;
+
+    private ProductScreen() {
+        setTitle("Sản phẩm");
+        setContentPane(productPanel);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setMinimumSize(new Dimension(800, 600));
+        pack();
+
+        _products = _productBUS.getAllProducts();
+
+        productsTable.setModel(new DefaultTableModel(
+                                       new Object[][] {},
+                                       new String[] {
+                                               "Mã sản phẩm",
+                                               "Tên",
+                                               "Nội dung",
+                                               "Xuất xứ",
+                                               "Ngày sản xuất",
+                                               "Số lượng",
+                                               "Giá thành (VNĐ)",
+                                               "Thời hạn bảo hành (tháng)",
+                                               "% giảm giá" })
+                               {
+                                   @Override
+                                   public boolean isCellEditable(int row, int column) {
+                                       return false;
+                                   }
+                               }
+        );
+
+        productsTable.getSelectionModel().addListSelectionListener(e -> {
+            int selectedRow = productsTable.getSelectedRow();
+            if (selectedRow == -1) {
+                return;
+            }
+
+            productIdTextField.setEnabled(false);
+            productIdTextField.setText(productsTable.getValueAt(selectedRow, 0).toString());
+            productNameTextField.setText(productsTable.getValueAt(selectedRow, 1).toString());
+            productDesTextField.setText(productsTable.getValueAt(selectedRow, 2).toString());
+            productOriginTextField.setText(productsTable.getValueAt(selectedRow, 3).toString());
+            productManuDateTextField.setText(productsTable.getValueAt(selectedRow, 4).toString());
+            productQuantityTextField.setText(productsTable.getValueAt(selectedRow, 5).toString());
+            productPriceTextField.setText(productsTable.getValueAt(selectedRow, 6).toString());
+            insuranceDurTextField.setText(productsTable.getValueAt(selectedRow, 7).toString());
+            discountTextField.setText(productsTable.getValueAt(selectedRow, 8).toString());
+        });
+
+        _populateTable();
+
+        clearValuesButton.addActionListener(e -> _clearFields());
+
+        addButton.addActionListener(e -> {
+            if (!_isProductInfoValid()) {
+                return;
+            }
+
+            Product product = new Product();
+            product.setProductId(productIdTextField.getText().trim());
+            product.setName(productNameTextField.getText().trim());
+            product.setDescription(productDesTextField.getText().trim());
+            product.setOrigin(productOriginTextField.getText().trim());
+            product.setManufactureDate(LocalDate.parse(productManuDateTextField.getText().trim()));
+            product.setQuantity(Long.parseLong(productQuantityTextField.getText().trim()));
+            product.setPrice(Double.parseDouble(productPriceTextField.getText().trim()));
+            product.setInsuranceDuration(Long.parseLong(insuranceDurTextField.getText().trim()));
+            product.setDiscountPercentage(Double.parseDouble(discountTextField.getText().trim()));
+
+            if (_productBUS.addProduct(product)) {
+                JOptionPane.showMessageDialog(
+                        ProductScreen.this,
+                        "Sản phẩm thêm thành công",
+                        "!!!",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+                Thread thread = new Thread(() -> {
+                    _products = _productBUS.getAllProducts();
+                    _populateTable();
+                });
+                thread.start();
+
+                _clearFields();
+            }
+        });
+
+        modifyButton.addActionListener(e -> {
+            if (!_isProductInfoValid()) {
+                return;
+            }
+
+            Product product = new Product();
+            product.setProductId(productIdTextField.getText().trim());
+            product.setName(productNameTextField.getText().trim());
+            product.setDescription(productDesTextField.getText().trim());
+            product.setOrigin(productOriginTextField.getText().trim());
+            product.setManufactureDate(LocalDate.parse(productManuDateTextField.getText().trim()));
+            product.setQuantity(Long.parseLong(productQuantityTextField.getText().trim()));
+            product.setPrice(Double.parseDouble(productPriceTextField.getText().trim()));
+            product.setInsuranceDuration(Long.parseLong(insuranceDurTextField.getText().trim()));
+            product.setDiscountPercentage(Double.parseDouble(discountTextField.getText().trim()));
+
+            if (_productBUS.updateProductById(product)) {
+                JOptionPane.showMessageDialog(
+                        ProductScreen.this,
+                        "Sản phẩm chỉnh sửa thành công",
+                        "!!!",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+                Thread thread = new Thread(() -> {
+                    _products = _productBUS.getAllProducts();
+                    _populateTable();
+                });
+                thread.start();
+
+                _clearFields();
+            }
+        });
+
+        deleteButton.addActionListener(e -> {
+            if (!_isProductInfoValid()) {
+                return;
+            }
+
+            if (_productBUS.deleteProductById(productIdTextField.getText().trim())) {
+                JOptionPane.showMessageDialog(
+                        ProductScreen.this,
+                        "Sản phẩm xóa thành công",
+                        "!!!",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+
+                Thread thread = new Thread(() -> {
+                    _products = _productBUS.getAllProducts();
+                    _populateTable();
+                });
+                thread.start();
+
+                _clearFields();
+            }
+        });
+
+        searchButton.addActionListener(e -> {
+            Thread thread = new Thread(() -> {
+                Product product = _productBUS.getProductByIdOrName(searchTextField.getText().trim());
+
+                if (searchTextField.getText().isEmpty() || product == null) {
+                    _products = _productBUS.getAllProducts();
+                    _populateTable();
+                }
+                else {
+                    _products.clear();
+                    _products.add(product);
+                    _populateTable();
+                }
+            });
+            thread.start();
+        });
+
+        exitButton.addActionListener(e -> System.exit(0));
+
+        setVisible(true);
+    }
 
     private void _populateTable() {
         DefaultTableModel defaultTableModel = (DefaultTableModel) productsTable.getModel();
@@ -60,7 +219,7 @@ public class ProductScreen extends JFrame {
             rowData[3] = _products.get(i).getOrigin();
             rowData[4] = _products.get(i).getManufactureDate();
             rowData[5] = _products.get(i).getQuantity();
-            rowData[6] = _products.get(i).getPrice();
+            rowData[6] = _products.get(i).getFormattedPrice();
             rowData[7] = _products.get(i).getInsuranceDuration();
             rowData[8] = _products.get(i).getDiscountPercentage();
             defaultTableModel.addRow(rowData);
@@ -90,8 +249,7 @@ public class ProductScreen extends JFrame {
                 productQuantityTextField.getText().isEmpty()    ||
                 productPriceTextField.getText().isEmpty()       ||
                 insuranceDurTextField.getText().isEmpty()       ||
-                discountTextField.getText().isEmpty()
-        )
+                discountTextField.getText().isEmpty())
         {
             JOptionPane.showMessageDialog(
                     this,
@@ -211,193 +369,12 @@ public class ProductScreen extends JFrame {
         return true;
     }
 
-    public ProductScreen(Employee employee) {
-        setTitle("Sản phẩm");
-        setContentPane(productPanel);
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(800, 600));
-        pack();
-
-        _employee = employee;
-        _products = _productBUS.getAllProducts();
-
-        productsTable.setModel(new DefaultTableModel(
-                new Object[][] {},
-                new String[] {
-                        "Mã sản phẩm",
-                        "Tên",
-                        "Nội dung",
-                        "Xuất xứ",
-                        "Ngày sản xuất",
-                        "Số lượng",
-                        "Giá thành (VNĐ)",
-                        "Thời hạn bảo hành (tháng)",
-                        "% giảm giá" })
-                               {
-                                    @Override
-                                    public boolean isCellEditable(int row, int column) {
-                                        return false;
-                                    }
-                               }
-        );
-
-        productsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                int selectedRow = productsTable.getSelectedRow();
-                if (selectedRow == -1) {
-                    return;
-                }
-
-                productIdTextField.setEnabled(false);
-                productIdTextField.setText(productsTable.getValueAt(selectedRow, 0).toString());
-                productNameTextField.setText(productsTable.getValueAt(selectedRow, 1).toString());
-                productDesTextField.setText(productsTable.getValueAt(selectedRow, 2).toString());
-                productOriginTextField.setText(productsTable.getValueAt(selectedRow, 3).toString());
-                productManuDateTextField.setText(productsTable.getValueAt(selectedRow, 4).toString());
-                productQuantityTextField.setText(productsTable.getValueAt(selectedRow, 5).toString());
-                productPriceTextField.setText(productsTable.getValueAt(selectedRow, 6).toString());
-                insuranceDurTextField.setText(productsTable.getValueAt(selectedRow, 7).toString());
-                discountTextField.setText(productsTable.getValueAt(selectedRow, 8).toString());
+    public static ProductScreen getProductScreenInstance() {
+        synchronized (ProductScreen.class) {
+            if (_productScreenInstance == null) {
+                _productScreenInstance = new ProductScreen();
             }
-        });
-
-        _populateTable();
-
-        clearValuesButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                _clearFields();
-            }
-        });
-
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!_isProductInfoValid()) {
-                    return;
-                }
-
-                Product product = new Product();
-                product.setProductId(productIdTextField.getText().trim());
-                product.setName(productNameTextField.getText().trim());
-                product.setDescription(productDesTextField.getText().trim());
-                product.setOrigin(productOriginTextField.getText().trim());
-                product.setManufactureDate(LocalDate.parse(productManuDateTextField.getText().trim()));
-                product.setQuantity(Long.parseLong(productQuantityTextField.getText().trim()));
-                product.setPrice(Double.parseDouble(productPriceTextField.getText().trim()));
-                product.setInsuranceDuration(Long.parseLong(insuranceDurTextField.getText().trim()));
-                product.setDiscountPercentage(Double.parseDouble(discountTextField.getText().trim()));
-
-                if (_productBUS.addProduct(product)) {
-                    JOptionPane.showMessageDialog(
-                            ProductScreen.this,
-                            "Sản phẩm thêm thành công",
-                            "!!!",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
-
-                    Thread thread = new Thread(() -> {
-                        _products = _productBUS.getAllProducts();
-                        _populateTable();
-                    });
-                    thread.start();
-
-                    _clearFields();
-                }
-            }
-        });
-
-        modifyButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!_isProductInfoValid()) {
-                    return;
-                }
-
-                Product product = new Product();
-                product.setProductId(productIdTextField.getText().trim());
-                product.setName(productNameTextField.getText().trim());
-                product.setDescription(productDesTextField.getText().trim());
-                product.setOrigin(productOriginTextField.getText().trim());
-                product.setManufactureDate(LocalDate.parse(productManuDateTextField.getText().trim()));
-                product.setQuantity(Long.parseLong(productQuantityTextField.getText().trim()));
-                product.setPrice(Double.parseDouble(productPriceTextField.getText().trim()));
-                product.setInsuranceDuration(Long.parseLong(insuranceDurTextField.getText().trim()));
-                product.setDiscountPercentage(Double.parseDouble(discountTextField.getText().trim()));
-
-                if (_productBUS.updateProductById(product)) {
-                    JOptionPane.showMessageDialog(
-                            ProductScreen.this,
-                            "Sản phẩm chỉnh sửa thành công",
-                            "!!!",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
-
-                    Thread thread = new Thread(() -> {
-                        _products = _productBUS.getAllProducts();
-                        _populateTable();
-                    });
-                    thread.start();
-
-                    _clearFields();
-                }
-            }
-        });
-
-        deleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!_isProductInfoValid()) {
-                    return;
-                }
-
-                if (_productBUS.deleteProductById(productIdTextField.getText().trim())) {
-                    JOptionPane.showMessageDialog(
-                            ProductScreen.this,
-                            "Sản phẩm xóa thành công",
-                            "!!!",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
-
-                    Thread thread = new Thread(() -> {
-                        _products = _productBUS.getAllProducts();
-                        _populateTable();
-                    });
-                    thread.start();
-
-                    _clearFields();
-                }
-            }
-        });
-
-        searchButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Thread thread = new Thread(() -> {
-                    Product product = _productBUS.getProductByIdOrName(searchTextField.getText().trim());
-
-                    if (searchTextField.getText().isEmpty() || product == null) {
-                        _products = _productBUS.getAllProducts();
-                        _populateTable();
-                    }
-                    else {
-                        _products.clear();
-                        _products.add(product);
-                        _populateTable();
-                    }
-                });
-                thread.start();
-            }
-        });
-
-        infoButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                InfoScreen infoScreen = new InfoScreen(ProductScreen.this, _employee);
-            }
-        });
-
-        setVisible(true);
+        }
+        return _productScreenInstance;
     }
 }

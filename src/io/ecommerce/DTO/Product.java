@@ -1,6 +1,9 @@
 package io.ecommerce.DTO;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.util.Locale;
 
 public class Product {
     private String _productId;
@@ -97,6 +100,10 @@ public class Product {
 
     public Double getPrice() {
         return _price;
+    }
+
+    public String getFormattedPrice() {
+        return new DecimalFormat("#").format(_price);
     }
 
     public void setPrice(double price) {
