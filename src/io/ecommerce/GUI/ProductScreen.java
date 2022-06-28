@@ -6,6 +6,8 @@ import io.ecommerce.DTO.Product;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -39,6 +41,8 @@ public class ProductScreen extends JFrame {
     private JTextField productIdTextField;
     private JLabel productIdLabel;
     private JScrollPane productScrollPane;
+    private JButton printReceiptButton;
+    private JButton logButton;
 
     private static volatile ProductScreen _productScreenInstance = null;
     private ProductBUS _productBUS = new ProductBUS();
@@ -188,19 +192,25 @@ public class ProductScreen extends JFrame {
 
         searchButton.addActionListener(e -> {
             Thread thread = new Thread(() -> {
-                Product product = _productBUS.getProductByIdOrName(searchTextField.getText().trim());
+                ArrayList<Product> products = _productBUS.getProductByIdOrName(searchTextField.getText().trim());
 
-                if (searchTextField.getText().isEmpty() || product == null) {
+                if (searchTextField.getText().isEmpty() || products.size() == 0) {
                     _products = _productBUS.getAllProducts();
-                    _populateTable();
                 }
                 else {
-                    _products.clear();
-                    _products.add(product);
-                    _populateTable();
+                    _products = products;
                 }
+                _populateTable();
             });
             thread.start();
+        });
+
+        printReceiptButton.addActionListener(e -> {
+
+        });
+
+        logButton.addActionListener(e -> {
+
         });
 
         exitButton.addActionListener(e -> System.exit(0));

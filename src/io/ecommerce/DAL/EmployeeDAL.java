@@ -37,26 +37,28 @@ public class EmployeeDAL implements ConnectionConfigurator {
         return employees;
     }
 
-    public Employee getEmployeeByIdOrName(String key) {
-        key += "%";
-
-        Employee employee = null;
+    public ArrayList<Employee> getEmployeeByIdOrName(String key) {
+        ArrayList<Employee> employees = new ArrayList<>();
+        String formattedKey = '%' + key + '%';
         String query = "SELECT * FROM Employees WHERE employee_id LIKE ? OR full_name LIKE ?;";
 
         try (Connection connection = DriverManager.getConnection(url);
             PreparedStatement preparedStatement = connection.prepareStatement(query);
         )
         {
-            preparedStatement.setString(1, key);
-            preparedStatement.setString(2, key);
+            preparedStatement.setString(1, formattedKey);
+            preparedStatement.setString(2, formattedKey);
             try (ResultSet resultSet = preparedStatement.executeQuery();) {
                 while (resultSet.next()) {
+                    Employee employee = new Employee();
                     employee = new Employee();
                     employee.setEmployeeId(resultSet.getString(1));
                     employee.setFullName(resultSet.getString(2));
                     employee.setEmail(resultSet.getString(3));
                     employee.setBirthdate(LocalDate.parse(resultSet.getString(4)));
                     employee.setGender(Gender.valueOf(resultSet.getString(5).toUpperCase(Locale.ROOT)));
+
+                    employees.add(employee);
                 }
             }
         }
@@ -64,7 +66,7 @@ public class EmployeeDAL implements ConnectionConfigurator {
             exception.printStackTrace();
         }
 
-        return employee;
+        return employees;
     }
 
     public Employee getEmployeeByCredentials(String email, String password) {

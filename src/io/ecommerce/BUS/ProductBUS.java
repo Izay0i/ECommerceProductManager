@@ -12,7 +12,7 @@ public class ProductBUS {
         return _productDAL.getAllProducts();
     }
 
-    public Product getProductByIdOrName(String key) {
+    public ArrayList<Product> getProductByIdOrName(String key) {
         return _productDAL.getProductByIdOrName(key);
     }
 

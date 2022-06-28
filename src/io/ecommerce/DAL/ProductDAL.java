@@ -39,20 +39,20 @@ public class ProductDAL implements ConnectionConfigurator {
         return products;
     }
 
-    public Product getProductByIdOrName(String key) {
-        key += "%";
-
-        Product product = null;
-        String query = "SELECT * FROM Products WHERE product_id LIKE ? OR name LIKE ?;";
+    public ArrayList<Product> getProductByIdOrName(String key) {
+        ArrayList<Product> products = new ArrayList<>();
+        String formattedKey = '%' + key + '%';
+        String query = "SELECT * FROM Products WHERE product_id LIKE ? OR name LIKE ? ORDER BY product_id DESC;";
 
         try (Connection connection = DriverManager.getConnection(url);
             PreparedStatement preparedStatement = connection.prepareStatement(query);
         )
         {
-            preparedStatement.setString(1, key);
-            preparedStatement.setString(2, key);
+            preparedStatement.setString(1, formattedKey);
+            preparedStatement.setString(2, formattedKey);
             try (ResultSet resultSet = preparedStatement.executeQuery();) {
                 while (resultSet.next()) {
+                    Product product = new Product();
                     product = new Product();
                     product.setProductId(resultSet.getString(1));
                     product.setName(resultSet.getString(2));
@@ -63,6 +63,8 @@ public class ProductDAL implements ConnectionConfigurator {
                     product.setPrice(Double.parseDouble(resultSet.getString(7)));
                     product.setInsuranceDuration(Long.parseLong(resultSet.getString(8)));
                     product.setDiscountPercentage(Double.parseDouble(resultSet.getString(9)));
+
+                    products.add(product);
                 }
             }
         }
@@ -70,7 +72,7 @@ public class ProductDAL implements ConnectionConfigurator {
             exception.printStackTrace();
         }
 
-        return product;
+        return products;
     }
 
     public boolean addProduct(Product product) {

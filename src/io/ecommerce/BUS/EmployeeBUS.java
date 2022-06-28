@@ -12,7 +12,7 @@ public class EmployeeBUS {
         return _employeeDAL.getAllEmployees();
     }
 
-    public Employee getEmployeeByIdOrName(String key) {
+    public ArrayList<Employee> getEmployeeByIdOrName(String key) {
         return _employeeDAL.getEmployeeByIdOrName(key);
     }
 
