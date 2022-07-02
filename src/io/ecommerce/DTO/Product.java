@@ -1,9 +1,7 @@
 package io.ecommerce.DTO;
 
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.time.LocalDate;
-import java.util.Locale;
 
 public class Product {
     private String _productId;

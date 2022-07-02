@@ -53,7 +53,7 @@ public class Employee {
     }
 
     public void setEmail(String email) {
-        if (Utility.validateEmail(email)) {
+        if (Utility.isEmailValid(email)) {
             _email = email;
         }
     }
